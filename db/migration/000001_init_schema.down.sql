@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS api_keys;
+DROP TABLE IF EXISTS shipment_status_logs;
+DROP TABLE IF EXISTS shipments;
+DROP TABLE IF EXISTS addresses;
+DROP TABLE IF EXISTS shippers;
+DROP TABLE IF EXISTS clients;
