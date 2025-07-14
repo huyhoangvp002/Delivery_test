@@ -1,6 +1,6 @@
 -- name: CreateShipper :one
-INSERT INTO shippers (name, phone, carrier, active)
-VALUES ($1, $2, $3, $4)
+INSERT INTO shippers (name, phone, active)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetShipper :one
@@ -11,7 +11,7 @@ SELECT * FROM shippers ORDER BY id LIMIT $1 OFFSET $2;
 
 -- name: UpdateShipper :one
 UPDATE shippers
-SET name = $2, phone = $3, carrier = $4, active = $5
+SET name = $2, phone = $3, active = $4
 WHERE id = $1
 RETURNING *;
 

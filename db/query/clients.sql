@@ -17,3 +17,6 @@ RETURNING *;
 
 -- name: DeleteClient :exec
 DELETE FROM clients WHERE id = $1;
+
+-- name: GetClientIDByAccountID :one 
+SELECT id FROM clients WHERE account_id = $1;

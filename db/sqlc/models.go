@@ -8,6 +8,14 @@ import (
 	"database/sql"
 )
 
+type Account struct {
+	ID        int64        `json:"id"`
+	Username  string       `json:"username"`
+	Password  string       `json:"password"`
+	Role      string       `json:"role"`
+	CreatedAt sql.NullTime `json:"created_at"`
+}
+
 type Address struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
@@ -30,10 +38,11 @@ type ApiKey struct {
 }
 
 type Client struct {
-	ID           int64        `json:"id"`
-	Name         string       `json:"name"`
-	ContactEmail string       `json:"contact_email"`
-	CreatedAt    sql.NullTime `json:"created_at"`
+	ID           int64         `json:"id"`
+	Name         string        `json:"name"`
+	AccountID    sql.NullInt32 `json:"account_id"`
+	ContactEmail string        `json:"contact_email"`
+	CreatedAt    sql.NullTime  `json:"created_at"`
 }
 
 type Shipment struct {
@@ -61,7 +70,6 @@ type Shipper struct {
 	ID        int64        `json:"id"`
 	Name      string       `json:"name"`
 	Phone     string       `json:"phone"`
-	Carrier   string       `json:"carrier"`
 	Active    sql.NullBool `json:"active"`
 	CreatedAt sql.NullTime `json:"created_at"`
 }

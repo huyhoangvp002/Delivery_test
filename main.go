@@ -2,15 +2,17 @@ package main
 
 import (
 	"database/sql"
-	db "delivery/db/sqlc"
-	"delivery/util"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
+	_ "github.com/lib/pq"
+
+	"github.com/huyhoangvp002/Delivery_test/api"
+	db "github.com/huyhoangvp002/Delivery_test/db/sqlc"
+	"github.com/huyhoangvp002/Delivery_test/util"
 	"github.com/joho/godotenv"
-	"github.com/techschool/simplebank/api"
 )
 
 func main() {
@@ -64,7 +66,7 @@ func main() {
 	}
 
 	//Chạy server trên cổng 8080
-	addr := ":8080"
+	addr := ":9999"
 	fmt.Printf("Server is running at %s\n", addr)
 	err = server.Start(addr)
 	if err != nil {

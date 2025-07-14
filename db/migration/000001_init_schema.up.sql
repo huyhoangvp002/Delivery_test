@@ -1,6 +1,7 @@
 CREATE TABLE "clients" (
   "id" bigserial PRIMARY KEY,
   "name" varchar NOT NULL,
+  "account_id" int ,
   "contact_email" varchar UNIQUE NOT NULL,
   "created_at" timestamptz DEFAULT (now())
 );
@@ -9,8 +10,6 @@ CREATE TABLE "api_keys" (
   "id" bigserial PRIMARY KEY,
   "client_id" bigint,
   "api_key" varchar UNIQUE NOT NULL,
-  "revoked" boolean DEFAULT false,
-  "expires_at" timestamptz DEFAULT (now()),
   "created_at" timestamptz DEFAULT (now()),
   "updated_at" timestamptz DEFAULT (now())
 );
@@ -51,11 +50,19 @@ CREATE TABLE "shippers" (
   "id" bigserial PRIMARY KEY,
   "name" varchar NOT NULL,
   "phone" varchar NOT NULL,
-  "carrier" varchar NOT NULL,
   "active" boolean DEFAULT true,
   "created_at" timestamptz DEFAULT (now())
 );
 
+CREATE TABLE "accounts" (
+  "id" bigserial PRIMARY KEY,
+  "username" varchar UNIQUE NOT NULL,
+  "password" varchar NOT NULL,
+  "role" varchar NOT NULL,
+  "created_at" timestamptz DEFAULT (now())
+);
+
+ALTER TABLE "clients" ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id");
 
 ALTER TABLE "api_keys" ADD FOREIGN KEY ("client_id") REFERENCES "clients" ("id");
 

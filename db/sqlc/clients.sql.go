@@ -7,12 +7,13 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createClient = `-- name: CreateClient :one
 INSERT INTO clients (name, contact_email)
 VALUES ($1, $2)
-RETURNING id, name, contact_email, created_at
+RETURNING id, name, account_id, contact_email, created_at
 `
 
 type CreateClientParams struct {
@@ -26,6 +27,7 @@ func (q *Queries) CreateClient(ctx context.Context, arg CreateClientParams) (Cli
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.AccountID,
 		&i.ContactEmail,
 		&i.CreatedAt,
 	)
@@ -42,7 +44,7 @@ func (q *Queries) DeleteClient(ctx context.Context, id int64) error {
 }
 
 const getClient = `-- name: GetClient :one
-SELECT id, name, contact_email, created_at FROM clients WHERE id = $1
+SELECT id, name, account_id, contact_email, created_at FROM clients WHERE id = $1
 `
 
 func (q *Queries) GetClient(ctx context.Context, id int64) (Client, error) {
@@ -51,14 +53,26 @@ func (q *Queries) GetClient(ctx context.Context, id int64) (Client, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.AccountID,
 		&i.ContactEmail,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
+const getClientIDByAccountID = `-- name: GetClientIDByAccountID :one
+SELECT id FROM clients WHERE account_id = $1
+`
+
+func (q *Queries) GetClientIDByAccountID(ctx context.Context, accountID sql.NullInt32) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getClientIDByAccountID, accountID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const listClients = `-- name: ListClients :many
-SELECT id, name, contact_email, created_at FROM clients ORDER BY id LIMIT $1 OFFSET $2
+SELECT id, name, account_id, contact_email, created_at FROM clients ORDER BY id LIMIT $1 OFFSET $2
 `
 
 type ListClientsParams struct {
@@ -78,6 +92,7 @@ func (q *Queries) ListClients(ctx context.Context, arg ListClientsParams) ([]Cli
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.AccountID,
 			&i.ContactEmail,
 			&i.CreatedAt,
 		); err != nil {
@@ -98,7 +113,7 @@ const updateClient = `-- name: UpdateClient :one
 UPDATE clients
 SET name = $2, contact_email = $3
 WHERE id = $1
-RETURNING id, name, contact_email, created_at
+RETURNING id, name, account_id, contact_email, created_at
 `
 
 type UpdateClientParams struct {
@@ -113,6 +128,7 @@ func (q *Queries) UpdateClient(ctx context.Context, arg UpdateClientParams) (Cli
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.AccountID,
 		&i.ContactEmail,
 		&i.CreatedAt,
 	)

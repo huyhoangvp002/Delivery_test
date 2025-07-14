@@ -11,31 +11,24 @@ import (
 )
 
 const createShipper = `-- name: CreateShipper :one
-INSERT INTO shippers (name, phone, carrier, active)
-VALUES ($1, $2, $3, $4)
-RETURNING id, name, phone, carrier, active, created_at
+INSERT INTO shippers (name, phone, active)
+VALUES ($1, $2, $3)
+RETURNING id, name, phone, active, created_at
 `
 
 type CreateShipperParams struct {
-	Name    string       `json:"name"`
-	Phone   string       `json:"phone"`
-	Carrier string       `json:"carrier"`
-	Active  sql.NullBool `json:"active"`
+	Name   string       `json:"name"`
+	Phone  string       `json:"phone"`
+	Active sql.NullBool `json:"active"`
 }
 
 func (q *Queries) CreateShipper(ctx context.Context, arg CreateShipperParams) (Shipper, error) {
-	row := q.db.QueryRowContext(ctx, createShipper,
-		arg.Name,
-		arg.Phone,
-		arg.Carrier,
-		arg.Active,
-	)
+	row := q.db.QueryRowContext(ctx, createShipper, arg.Name, arg.Phone, arg.Active)
 	var i Shipper
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Phone,
-		&i.Carrier,
 		&i.Active,
 		&i.CreatedAt,
 	)
@@ -52,7 +45,7 @@ func (q *Queries) DeleteShipper(ctx context.Context, id int64) error {
 }
 
 const getShipper = `-- name: GetShipper :one
-SELECT id, name, phone, carrier, active, created_at FROM shippers WHERE id = $1
+SELECT id, name, phone, active, created_at FROM shippers WHERE id = $1
 `
 
 func (q *Queries) GetShipper(ctx context.Context, id int64) (Shipper, error) {
@@ -62,7 +55,6 @@ func (q *Queries) GetShipper(ctx context.Context, id int64) (Shipper, error) {
 		&i.ID,
 		&i.Name,
 		&i.Phone,
-		&i.Carrier,
 		&i.Active,
 		&i.CreatedAt,
 	)
@@ -70,7 +62,7 @@ func (q *Queries) GetShipper(ctx context.Context, id int64) (Shipper, error) {
 }
 
 const listShippers = `-- name: ListShippers :many
-SELECT id, name, phone, carrier, active, created_at FROM shippers ORDER BY id LIMIT $1 OFFSET $2
+SELECT id, name, phone, active, created_at FROM shippers ORDER BY id LIMIT $1 OFFSET $2
 `
 
 type ListShippersParams struct {
@@ -91,7 +83,6 @@ func (q *Queries) ListShippers(ctx context.Context, arg ListShippersParams) ([]S
 			&i.ID,
 			&i.Name,
 			&i.Phone,
-			&i.Carrier,
 			&i.Active,
 			&i.CreatedAt,
 		); err != nil {
@@ -110,17 +101,16 @@ func (q *Queries) ListShippers(ctx context.Context, arg ListShippersParams) ([]S
 
 const updateShipper = `-- name: UpdateShipper :one
 UPDATE shippers
-SET name = $2, phone = $3, carrier = $4, active = $5
+SET name = $2, phone = $3, active = $4
 WHERE id = $1
-RETURNING id, name, phone, carrier, active, created_at
+RETURNING id, name, phone, active, created_at
 `
 
 type UpdateShipperParams struct {
-	ID      int64        `json:"id"`
-	Name    string       `json:"name"`
-	Phone   string       `json:"phone"`
-	Carrier string       `json:"carrier"`
-	Active  sql.NullBool `json:"active"`
+	ID     int64        `json:"id"`
+	Name   string       `json:"name"`
+	Phone  string       `json:"phone"`
+	Active sql.NullBool `json:"active"`
 }
 
 func (q *Queries) UpdateShipper(ctx context.Context, arg UpdateShipperParams) (Shipper, error) {
@@ -128,7 +118,6 @@ func (q *Queries) UpdateShipper(ctx context.Context, arg UpdateShipperParams) (S
 		arg.ID,
 		arg.Name,
 		arg.Phone,
-		arg.Carrier,
 		arg.Active,
 	)
 	var i Shipper
@@ -136,7 +125,6 @@ func (q *Queries) UpdateShipper(ctx context.Context, arg UpdateShipperParams) (S
 		&i.ID,
 		&i.Name,
 		&i.Phone,
-		&i.Carrier,
 		&i.Active,
 		&i.CreatedAt,
 	)
