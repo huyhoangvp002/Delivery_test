@@ -10,41 +10,33 @@ import (
 )
 
 const createAddress = `-- name: CreateAddress :one
-INSERT INTO addresses (name, phone, street, ward, district, city, country)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, name, phone, street, ward, district, city, country
+INSERT INTO addresses (name, phone, address, status)
+VALUES ($1, $2, $3, $4)
+RETURNING id, name, phone, address, status, created_at
 `
 
 type CreateAddressParams struct {
-	Name     string `json:"name"`
-	Phone    string `json:"phone"`
-	Street   string `json:"street"`
-	Ward     string `json:"ward"`
-	District string `json:"district"`
-	City     string `json:"city"`
-	Country  string `json:"country"`
+	Name    string `json:"name"`
+	Phone   string `json:"phone"`
+	Address string `json:"address"`
+	Status  string `json:"status"`
 }
 
 func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (Address, error) {
 	row := q.db.QueryRowContext(ctx, createAddress,
 		arg.Name,
 		arg.Phone,
-		arg.Street,
-		arg.Ward,
-		arg.District,
-		arg.City,
-		arg.Country,
+		arg.Address,
+		arg.Status,
 	)
 	var i Address
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Phone,
-		&i.Street,
-		&i.Ward,
-		&i.District,
-		&i.City,
-		&i.Country,
+		&i.Address,
+		&i.Status,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -58,106 +50,20 @@ func (q *Queries) DeleteAddress(ctx context.Context, id int64) error {
 	return err
 }
 
-const getAddress = `-- name: GetAddress :one
-SELECT id, name, phone, street, ward, district, city, country FROM addresses WHERE id = $1
+const getAddressByID = `-- name: GetAddressByID :one
+SELECT id, name, phone, address, status, created_at FROM addresses WHERE id = $1
 `
 
-func (q *Queries) GetAddress(ctx context.Context, id int64) (Address, error) {
-	row := q.db.QueryRowContext(ctx, getAddress, id)
+func (q *Queries) GetAddressByID(ctx context.Context, id int64) (Address, error) {
+	row := q.db.QueryRowContext(ctx, getAddressByID, id)
 	var i Address
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Phone,
-		&i.Street,
-		&i.Ward,
-		&i.District,
-		&i.City,
-		&i.Country,
-	)
-	return i, err
-}
-
-const listAddresses = `-- name: ListAddresses :many
-SELECT id, name, phone, street, ward, district, city, country FROM addresses ORDER BY id LIMIT $1 OFFSET $2
-`
-
-type ListAddressesParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
-}
-
-func (q *Queries) ListAddresses(ctx context.Context, arg ListAddressesParams) ([]Address, error) {
-	rows, err := q.db.QueryContext(ctx, listAddresses, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Address{}
-	for rows.Next() {
-		var i Address
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Phone,
-			&i.Street,
-			&i.Ward,
-			&i.District,
-			&i.City,
-			&i.Country,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const updateAddress = `-- name: UpdateAddress :one
-UPDATE addresses
-SET name = $2, phone = $3, street = $4, ward = $5, district = $6, city = $7, country = $8
-WHERE id = $1
-RETURNING id, name, phone, street, ward, district, city, country
-`
-
-type UpdateAddressParams struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	Phone    string `json:"phone"`
-	Street   string `json:"street"`
-	Ward     string `json:"ward"`
-	District string `json:"district"`
-	City     string `json:"city"`
-	Country  string `json:"country"`
-}
-
-func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (Address, error) {
-	row := q.db.QueryRowContext(ctx, updateAddress,
-		arg.ID,
-		arg.Name,
-		arg.Phone,
-		arg.Street,
-		arg.Ward,
-		arg.District,
-		arg.City,
-		arg.Country,
-	)
-	var i Address
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Phone,
-		&i.Street,
-		&i.Ward,
-		&i.District,
-		&i.City,
-		&i.Country,
+		&i.Address,
+		&i.Status,
+		&i.CreatedAt,
 	)
 	return i, err
 }

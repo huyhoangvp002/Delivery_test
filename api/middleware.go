@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	db "github.com/huyhoangvp002/Delivery_test/db/sqlc"
 	"github.com/huyhoangvp002/Delivery_test/token"
 )
 
@@ -76,5 +77,37 @@ func roleMiddleware(roles ...string) gin.HandlerFunc {
 
 		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"message": "permission denied"})
 
+	}
+}
+
+func AuthAPIKeyMiddleware(store db.Querier) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		authHeader := ctx.GetHeader("Authorization")
+		if authHeader == "" {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing Authorization header"})
+			return
+		}
+
+		if !strings.HasPrefix(authHeader, "ApiKey ") {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format"})
+			return
+		}
+
+		apiKey := strings.TrimSpace(strings.TrimPrefix(authHeader, "ApiKey "))
+		if apiKey == "" {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Empty API key"})
+			return
+		}
+
+		key, err := store.GetAPIKeyByValue(ctx, apiKey)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid API key"})
+			return
+		}
+
+		ctx.Set("client_id", key.ClientID)
+
+		ctx.Next()
 	}
 }

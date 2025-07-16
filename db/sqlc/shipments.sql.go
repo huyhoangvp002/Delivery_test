@@ -10,6 +10,61 @@ import (
 	"database/sql"
 )
 
+const checkShipmentCodeExists = `-- name: CheckShipmentCodeExists :one
+SELECT EXISTS (
+  SELECT 1 FROM shipments WHERE shipment_code = $1
+)
+`
+
+func (q *Queries) CheckShipmentCodeExists(ctx context.Context, shipmentCode sql.NullString) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkShipmentCodeExists, shipmentCode)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const createShipment = `-- name: CreateShipment :one
+INSERT INTO shipments (client_id, from_address_id, to_address_id, shipper_id, shipment_code, fee, status)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, client_id, from_address_id, to_address_id, shipper_id, shipment_code, fee, status, created_at, updated_at
+`
+
+type CreateShipmentParams struct {
+	ClientID      sql.NullInt64  `json:"client_id"`
+	FromAddressID sql.NullInt64  `json:"from_address_id"`
+	ToAddressID   sql.NullInt64  `json:"to_address_id"`
+	ShipperID     sql.NullInt64  `json:"shipper_id"`
+	ShipmentCode  sql.NullString `json:"shipment_code"`
+	Fee           int32          `json:"fee"`
+	Status        sql.NullString `json:"status"`
+}
+
+func (q *Queries) CreateShipment(ctx context.Context, arg CreateShipmentParams) (Shipment, error) {
+	row := q.db.QueryRowContext(ctx, createShipment,
+		arg.ClientID,
+		arg.FromAddressID,
+		arg.ToAddressID,
+		arg.ShipperID,
+		arg.ShipmentCode,
+		arg.Fee,
+		arg.Status,
+	)
+	var i Shipment
+	err := row.Scan(
+		&i.ID,
+		&i.ClientID,
+		&i.FromAddressID,
+		&i.ToAddressID,
+		&i.ShipperID,
+		&i.ShipmentCode,
+		&i.Fee,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const deleteShipment = `-- name: DeleteShipment :exec
 DELETE FROM shipments WHERE id = $1
 `

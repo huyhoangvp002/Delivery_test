@@ -10,10 +10,13 @@ import (
 )
 
 type Querier interface {
+	CheckAPIKeyExists(ctx context.Context, apiKey string) (bool, error)
+	CheckShipmentCodeExists(ctx context.Context, shipmentCode sql.NullString) (bool, error)
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
 	CreateAddress(ctx context.Context, arg CreateAddressParams) (Address, error)
 	CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error)
 	CreateClient(ctx context.Context, arg CreateClientParams) (Client, error)
+	CreateShipment(ctx context.Context, arg CreateShipmentParams) (Shipment, error)
 	CreateShipmentStatusLog(ctx context.Context, arg CreateShipmentStatusLogParams) (ShipmentStatusLog, error)
 	CreateShipper(ctx context.Context, arg CreateShipperParams) (Shipper, error)
 	DeleteAccount(ctx context.Context, id int64) error
@@ -23,10 +26,11 @@ type Querier interface {
 	DeleteShipment(ctx context.Context, id int64) error
 	DeleteShipmentStatusLog(ctx context.Context, id int64) error
 	DeleteShipper(ctx context.Context, id int64) error
+	GetAPIKeyByValue(ctx context.Context, apiKey string) (ApiKey, error)
 	GetAccountByID(ctx context.Context, id int64) (Account, error)
 	GetAccountByUsername(ctx context.Context, username string) (Account, error)
 	GetAccountIDByUsername(ctx context.Context, username string) (int64, error)
-	GetAddress(ctx context.Context, id int64) (Address, error)
+	GetAddressByID(ctx context.Context, id int64) (Address, error)
 	GetApiKey(ctx context.Context, id int64) (ApiKey, error)
 	GetClient(ctx context.Context, id int64) (Client, error)
 	GetClientIDByAccountID(ctx context.Context, accountID sql.NullInt32) (int64, error)
@@ -35,7 +39,6 @@ type Querier interface {
 	GetShipmentStatusLog(ctx context.Context, id int64) (ShipmentStatusLog, error)
 	GetShipper(ctx context.Context, id int64) (Shipper, error)
 	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error)
-	ListAddresses(ctx context.Context, arg ListAddressesParams) ([]Address, error)
 	ListApiKeys(ctx context.Context, arg ListApiKeysParams) ([]ApiKey, error)
 	ListApiKeysByClientID(ctx context.Context, arg ListApiKeysByClientIDParams) ([]ApiKey, error)
 	ListClients(ctx context.Context, arg ListClientsParams) ([]Client, error)
@@ -45,7 +48,6 @@ type Querier interface {
 	ListShipmentsByClient(ctx context.Context, arg ListShipmentsByClientParams) ([]Shipment, error)
 	ListShippers(ctx context.Context, arg ListShippersParams) ([]Shipper, error)
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error)
-	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (Address, error)
 	UpdateApiKey(ctx context.Context, arg UpdateApiKeyParams) (ApiKey, error)
 	UpdateClient(ctx context.Context, arg UpdateClientParams) (Client, error)
 	UpdateShipment(ctx context.Context, arg UpdateShipmentParams) (Shipment, error)

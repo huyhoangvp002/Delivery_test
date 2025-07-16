@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -43,6 +45,10 @@ func (server *Server) setUpRouter() {
 	router.POST("/signup", server.CreateAccount)
 	router.POST("/signin", server.Login)
 
+	router.POST("/api_key", authMiddleware(server.tokenMaker), roleMiddleware("client"), server.CreateKey)
+	router.POST("/client", authMiddleware(server.tokenMaker), roleMiddleware("client", "admin"), server.ClientRegister)
+	router.POST("/shipment", AuthAPIKeyMiddleware(server.store), server.CreateShipment)
+
 	server.router = router
 }
 
@@ -51,4 +57,24 @@ func (s *Server) Start(address string) error {
 }
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
+}
+
+func (server *Server) generateUniqueShipmentCode(ctx context.Context, length int) (string, error) {
+	const maxAttempts = 100
+	for i := 0; i < maxAttempts; i++ {
+		code, err := util.GenerateRandomCode(length)
+		if err != nil {
+			return "", err
+		}
+
+		exists, err := server.store.CheckShipmentCodeExists(ctx, sql.NullString{String: code, Valid: true})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return code, nil
+		}
+	}
+	return "", fmt.Errorf("failed to generate unique shipment code after %d attempts", maxAttempts)
 }

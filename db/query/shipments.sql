@@ -1,3 +1,5 @@
+
+-- name: CreateShipment :one
 INSERT INTO shipments (client_id, from_address_id, to_address_id, shipper_id, shipment_code, fee, status)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
@@ -19,3 +21,8 @@ DELETE FROM shipments WHERE id = $1;
 
 -- name: ListShipmentsByClient :many
 SELECT * FROM shipments WHERE client_id = $1 ORDER BY id LIMIT $2 OFFSET $3;
+
+-- name: CheckShipmentCodeExists :one
+SELECT EXISTS (
+  SELECT 1 FROM shipments WHERE shipment_code = $1
+);

@@ -10,33 +10,37 @@ import (
 	"database/sql"
 )
 
+const checkAPIKeyExists = `-- name: CheckAPIKeyExists :one
+SELECT EXISTS (
+  SELECT 1 FROM api_keys WHERE api_key = $1
+)
+`
+
+func (q *Queries) CheckAPIKeyExists(ctx context.Context, apiKey string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkAPIKeyExists, apiKey)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createApiKey = `-- name: CreateApiKey :one
-INSERT INTO api_keys (client_id, api_key, revoked, expires_at)
-VALUES ($1, $2, $3, $4)
-RETURNING id, client_id, api_key, revoked, expires_at, created_at, updated_at
+INSERT INTO api_keys (client_id, api_key)
+VALUES ($1, $2)
+RETURNING id, client_id, api_key, created_at, updated_at
 `
 
 type CreateApiKeyParams struct {
-	ClientID  sql.NullInt64 `json:"client_id"`
-	ApiKey    string        `json:"api_key"`
-	Revoked   sql.NullBool  `json:"revoked"`
-	ExpiresAt sql.NullTime  `json:"expires_at"`
+	ClientID sql.NullInt64 `json:"client_id"`
+	ApiKey   string        `json:"api_key"`
 }
 
 func (q *Queries) CreateApiKey(ctx context.Context, arg CreateApiKeyParams) (ApiKey, error) {
-	row := q.db.QueryRowContext(ctx, createApiKey,
-		arg.ClientID,
-		arg.ApiKey,
-		arg.Revoked,
-		arg.ExpiresAt,
-	)
+	row := q.db.QueryRowContext(ctx, createApiKey, arg.ClientID, arg.ApiKey)
 	var i ApiKey
 	err := row.Scan(
 		&i.ID,
 		&i.ClientID,
 		&i.ApiKey,
-		&i.Revoked,
-		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -52,8 +56,25 @@ func (q *Queries) DeleteApiKey(ctx context.Context, id int64) error {
 	return err
 }
 
+const getAPIKeyByValue = `-- name: GetAPIKeyByValue :one
+SELECT id, client_id, api_key, created_at, updated_at FROM api_keys WHERE api_key = $1 LIMIT 1
+`
+
+func (q *Queries) GetAPIKeyByValue(ctx context.Context, apiKey string) (ApiKey, error) {
+	row := q.db.QueryRowContext(ctx, getAPIKeyByValue, apiKey)
+	var i ApiKey
+	err := row.Scan(
+		&i.ID,
+		&i.ClientID,
+		&i.ApiKey,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getApiKey = `-- name: GetApiKey :one
-SELECT id, client_id, api_key, revoked, expires_at, created_at, updated_at FROM api_keys WHERE id = $1
+SELECT id, client_id, api_key, created_at, updated_at FROM api_keys WHERE id = $1
 `
 
 func (q *Queries) GetApiKey(ctx context.Context, id int64) (ApiKey, error) {
@@ -63,8 +84,6 @@ func (q *Queries) GetApiKey(ctx context.Context, id int64) (ApiKey, error) {
 		&i.ID,
 		&i.ClientID,
 		&i.ApiKey,
-		&i.Revoked,
-		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -72,7 +91,7 @@ func (q *Queries) GetApiKey(ctx context.Context, id int64) (ApiKey, error) {
 }
 
 const listApiKeys = `-- name: ListApiKeys :many
-SELECT id, client_id, api_key, revoked, expires_at, created_at, updated_at FROM api_keys ORDER BY id LIMIT $1 OFFSET $2
+SELECT id, client_id, api_key, created_at, updated_at FROM api_keys ORDER BY id LIMIT $1 OFFSET $2
 `
 
 type ListApiKeysParams struct {
@@ -93,8 +112,6 @@ func (q *Queries) ListApiKeys(ctx context.Context, arg ListApiKeysParams) ([]Api
 			&i.ID,
 			&i.ClientID,
 			&i.ApiKey,
-			&i.Revoked,
-			&i.ExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -112,7 +129,7 @@ func (q *Queries) ListApiKeys(ctx context.Context, arg ListApiKeysParams) ([]Api
 }
 
 const listApiKeysByClientID = `-- name: ListApiKeysByClientID :many
-SELECT id, client_id, api_key, revoked, expires_at, created_at, updated_at FROM api_keys WHERE client_id = $1 ORDER BY id LIMIT $2 OFFSET $3
+SELECT id, client_id, api_key, created_at, updated_at FROM api_keys WHERE client_id = $1 ORDER BY id LIMIT $2 OFFSET $3
 `
 
 type ListApiKeysByClientIDParams struct {
@@ -134,8 +151,6 @@ func (q *Queries) ListApiKeysByClientID(ctx context.Context, arg ListApiKeysByCl
 			&i.ID,
 			&i.ClientID,
 			&i.ApiKey,
-			&i.Revoked,
-			&i.ExpiresAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -154,32 +169,23 @@ func (q *Queries) ListApiKeysByClientID(ctx context.Context, arg ListApiKeysByCl
 
 const updateApiKey = `-- name: UpdateApiKey :one
 UPDATE api_keys
-SET api_key = $2, revoked = $3, expires_at = $4, updated_at = NOW()
+SET api_key = $2, updated_at = NOW()
 WHERE id = $1
-RETURNING id, client_id, api_key, revoked, expires_at, created_at, updated_at
+RETURNING id, client_id, api_key, created_at, updated_at
 `
 
 type UpdateApiKeyParams struct {
-	ID        int64        `json:"id"`
-	ApiKey    string       `json:"api_key"`
-	Revoked   sql.NullBool `json:"revoked"`
-	ExpiresAt sql.NullTime `json:"expires_at"`
+	ID     int64  `json:"id"`
+	ApiKey string `json:"api_key"`
 }
 
 func (q *Queries) UpdateApiKey(ctx context.Context, arg UpdateApiKeyParams) (ApiKey, error) {
-	row := q.db.QueryRowContext(ctx, updateApiKey,
-		arg.ID,
-		arg.ApiKey,
-		arg.Revoked,
-		arg.ExpiresAt,
-	)
+	row := q.db.QueryRowContext(ctx, updateApiKey, arg.ID, arg.ApiKey)
 	var i ApiKey
 	err := row.Scan(
 		&i.ID,
 		&i.ClientID,
 		&i.ApiKey,
-		&i.Revoked,
-		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

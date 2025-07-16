@@ -1,7 +1,7 @@
 CREATE TABLE "clients" (
   "id" bigserial PRIMARY KEY,
   "name" varchar NOT NULL,
-  "account_id" int ,
+  "account_id" int,
   "contact_email" varchar UNIQUE NOT NULL,
   "created_at" timestamptz DEFAULT (now())
 );
@@ -17,12 +17,10 @@ CREATE TABLE "api_keys" (
 CREATE TABLE "addresses" (
   "id" bigserial PRIMARY KEY,
   "name" varchar NOT NULL,
-  "phone" varchar UNIQUE NOT NULL,
-  "street" varchar NOT NULL,
-  "ward" varchar NOT NULL,
-  "district" varchar NOT NULL,
-  "city" varchar NOT NULL,
-  "country" varchar NOT NULL
+  "phone" varchar NOT NULL,
+  "address" varchar NOT NULL,
+  "status" varchar NOT NULL,
+  "created_at" timestamptz DEFAULT (now())
 );
 
 CREATE TABLE "shipments" (
@@ -61,6 +59,8 @@ CREATE TABLE "accounts" (
   "role" varchar NOT NULL,
   "created_at" timestamptz DEFAULT (now())
 );
+
+COMMENT ON COLUMN "shipments"."status" IS 'pending, accepted, in_transit, delivered, canceled';
 
 ALTER TABLE "clients" ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id");
 

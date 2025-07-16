@@ -17,22 +17,18 @@ type Account struct {
 }
 
 type Address struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	Phone    string `json:"phone"`
-	Street   string `json:"street"`
-	Ward     string `json:"ward"`
-	District string `json:"district"`
-	City     string `json:"city"`
-	Country  string `json:"country"`
+	ID        int64        `json:"id"`
+	Name      string       `json:"name"`
+	Phone     string       `json:"phone"`
+	Address   string       `json:"address"`
+	Status    string       `json:"status"`
+	CreatedAt sql.NullTime `json:"created_at"`
 }
 
 type ApiKey struct {
 	ID        int64         `json:"id"`
 	ClientID  sql.NullInt64 `json:"client_id"`
 	ApiKey    string        `json:"api_key"`
-	Revoked   sql.NullBool  `json:"revoked"`
-	ExpiresAt sql.NullTime  `json:"expires_at"`
 	CreatedAt sql.NullTime  `json:"created_at"`
 	UpdatedAt sql.NullTime  `json:"updated_at"`
 }
@@ -53,9 +49,10 @@ type Shipment struct {
 	ShipperID     sql.NullInt64  `json:"shipper_id"`
 	ShipmentCode  sql.NullString `json:"shipment_code"`
 	Fee           int32          `json:"fee"`
-	Status        sql.NullString `json:"status"`
-	CreatedAt     sql.NullTime   `json:"created_at"`
-	UpdatedAt     sql.NullTime   `json:"updated_at"`
+	// pending, accepted, in_transit, delivered, canceled
+	Status    sql.NullString `json:"status"`
+	CreatedAt sql.NullTime   `json:"created_at"`
+	UpdatedAt sql.NullTime   `json:"updated_at"`
 }
 
 type ShipmentStatusLog struct {
