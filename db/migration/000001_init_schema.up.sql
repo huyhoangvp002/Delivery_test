@@ -31,7 +31,7 @@ CREATE TABLE "shipments" (
   "shipper_id" bigint,
   "shipment_code" varchar UNIQUE,
   "fee" int NOT NULL,
-  "status" varchar,
+  "status" varchar CHECK (status IN ('created','picked','in_transit','delivered','failed')),
   "created_at" timestamptz DEFAULT (now()),
   "updated_at" timestamptz DEFAULT (now())
 );

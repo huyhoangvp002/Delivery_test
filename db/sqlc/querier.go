@@ -51,6 +51,7 @@ type Querier interface {
 	UpdateApiKey(ctx context.Context, arg UpdateApiKeyParams) (ApiKey, error)
 	UpdateClient(ctx context.Context, arg UpdateClientParams) (Client, error)
 	UpdateShipment(ctx context.Context, arg UpdateShipmentParams) (Shipment, error)
+	UpdateShipmentStatus(ctx context.Context, arg UpdateShipmentStatusParams) (UpdateShipmentStatusRow, error)
 	UpdateShipper(ctx context.Context, arg UpdateShipperParams) (Shipper, error)
 }
 

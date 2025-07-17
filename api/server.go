@@ -47,7 +47,8 @@ func (server *Server) setUpRouter() {
 
 	router.POST("/api_key", authMiddleware(server.tokenMaker), roleMiddleware("client"), server.CreateKey)
 	router.POST("/client", authMiddleware(server.tokenMaker), roleMiddleware("client", "admin"), server.ClientRegister)
-	router.POST("/shipment", AuthAPIKeyMiddleware(server.store), server.CreateShipment)
+	router.POST("/api/shipment", AuthAPIKeyMiddleware(server.store), server.CreateShipment)
+	router.POST("/shipment/status", server.UpdateShipmentStatus)
 
 	server.router = router
 }

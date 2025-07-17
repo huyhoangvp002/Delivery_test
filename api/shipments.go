@@ -1,11 +1,16 @@
 package api
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/huyhoangvp002/Delivery_test/db/sqlc"
+	"github.com/huyhoangvp002/Delivery_test/util"
 )
 
 type addressRequest struct {
@@ -81,7 +86,7 @@ func (server *Server) CreateShipment(ctx *gin.Context) {
 		ToAddressID:   sql.NullInt64{Int64: to_address.ID, Valid: true},
 		Fee:           int32(req.Fee),
 		ShipmentCode:  sql.NullString{String: shipment_code, Valid: true},
-		Status:        sql.NullString{String: "pending", Valid: true},
+		Status:        sql.NullString{String: "created", Valid: true},
 	}
 
 	shipment, err := server.store.CreateShipment(ctx, arg1)
@@ -95,4 +100,62 @@ func (server *Server) CreateShipment(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, shipment)
 
+}
+
+type statusRequest struct {
+	ShipmentCode string `json:"shipment_code"`
+	Status       string `json:"status"`
+	UpdatedAt    string `json:"updated_at"`
+}
+
+func (server *Server) UpdateShipmentStatus(ctx *gin.Context) {
+	webhookURL := "http://localhost:8080/api/webhook"
+
+	var req statusRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	ok := util.IsValidStatus(req.Status)
+	if !ok {
+		ctx.JSON(http.StatusBadRequest, gin.H{"err": "Invalid Status"})
+		return
+	}
+
+	arg := db.UpdateShipmentStatusParams{
+		ShipmentCode: sql.NullString{String: req.ShipmentCode, Valid: true},
+		Status:       sql.NullString{String: req.Status, Valid: true},
+	}
+	shipment, err := server.store.UpdateShipmentStatus(ctx, arg)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	payload := statusRequest{
+		ShipmentCode: req.ShipmentCode,
+		Status:       req.Status,
+		UpdatedAt:    time.Now().Format(time.RFC3339),
+	}
+
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("[ERROR] Cannot marshal webhook payload: %v", err)
+		return
+	}
+
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("[ERROR] Cannot POST to webhook: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	log.Printf("[INFO] Webhook sent. Status: %s", resp.Status)
+
+	ctx.JSON(http.StatusOK, shipment)
 }

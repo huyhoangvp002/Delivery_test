@@ -106,7 +106,7 @@ func AuthAPIKeyMiddleware(store db.Querier) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set("client_id", key.ClientID)
+		ctx.Set("client_id", key.ClientID.Int64)
 
 		ctx.Next()
 	}

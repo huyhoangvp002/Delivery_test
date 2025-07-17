@@ -26,3 +26,6 @@ SELECT * FROM shipments WHERE client_id = $1 ORDER BY id LIMIT $2 OFFSET $3;
 SELECT EXISTS (
   SELECT 1 FROM shipments WHERE shipment_code = $1
 );
+
+-- name: UpdateShipmentStatus :one
+UPDATE shipments SET status = $2, updated_at = $3 WHERE shipment_code = $1 RETURNING shipment_code,status,updated_at;

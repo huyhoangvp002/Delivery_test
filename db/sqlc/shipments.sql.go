@@ -227,3 +227,26 @@ func (q *Queries) UpdateShipment(ctx context.Context, arg UpdateShipmentParams) 
 	)
 	return i, err
 }
+
+const updateShipmentStatus = `-- name: UpdateShipmentStatus :one
+UPDATE shipments SET status = $2, updated_at = $3 WHERE shipment_code = $1 RETURNING shipment_code,status,updated_at
+`
+
+type UpdateShipmentStatusParams struct {
+	ShipmentCode sql.NullString `json:"shipment_code"`
+	Status       sql.NullString `json:"status"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+type UpdateShipmentStatusRow struct {
+	ShipmentCode sql.NullString `json:"shipment_code"`
+	Status       sql.NullString `json:"status"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) UpdateShipmentStatus(ctx context.Context, arg UpdateShipmentStatusParams) (UpdateShipmentStatusRow, error) {
+	row := q.db.QueryRowContext(ctx, updateShipmentStatus, arg.ShipmentCode, arg.Status, arg.UpdatedAt)
+	var i UpdateShipmentStatusRow
+	err := row.Scan(&i.ShipmentCode, &i.Status, &i.UpdatedAt)
+	return i, err
+}
